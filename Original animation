@@ -1,0 +1,172 @@
+import numpy as np
+from manim import *
+import itertools
+import random
+import math
+
+config.pixel_height = 1920
+config.pixel_width = 1080
+config.frame_height = 16.0
+config.frame_width = 9.0
+
+class PigeonHole(MovingCameraScene):
+    def construct(self):
+        self.camera.background_color = "#121414"
+        
+        people = VGroup(*[SVGMobject("man svg.svg").scale(0.25).set_color(WHITE) for _ in range(20)])
+        radius = 2.5
+        for i, person in enumerate(people):
+            angle = i * TAU / 20
+            person.move_to(RIGHT * radius * np.cos(angle) + UP * radius * np.sin(angle))
+        
+        self.play(FadeIn(people, lag_ratio=0.2))
+        
+        self.wait()
+
+
+        knight = random.choice(people)
+        knight_loc = knight.get_center()
+        self.play(knight.animate.move_to(ORIGIN-[1,0,0]))
+
+        blue = "#0011ff"
+        red = "#de1600"
+
+        self.wait(0.5)
+        self.play(knight.animate.set_fill("#0011ff"))
+        self.wait()
+        self.play(knight.animate.set_fill("#de1600"))
+        self.wait()
+        self.play(knight.animate.set_fill(WHITE))
+        self.play( knight.animate.move_to(knight_loc))
+
+        # 2. Ask the Question
+        # Draw arrows clockwise to represent asking the person to the right
+        arrows = VGroup()
+        for i in range(20):
+            p1 = people[i].get_center()
+            p2 = people[(i+1)%20].get_center() # (i-1)%20 is clockwise (right)
+            arrow = CurvedArrow(p1, p2,  stroke_width=4, tip_length=0.15,).scale(0.8)
+            arrow.move_to(arrow.get_center()*1.1)
+            arrows.add(arrow)
+
+        first_arrow=arrows[0]
+        self.play(FadeIn(first_arrow))
+        self.wait()
+        arrows.remove(arrows[0])
+
+        self.play(FadeIn(arrows, lag_ratio=0.2), run_time=2)
+        self.wait()
+        self.play(FadeOut(arrows, first_arrow))
+        self.wait()
+        
+        become_knight = []
+        for guy in people:
+            become_knight.append(guy.animate.set_fill(blue))
+
+        self.play(AnimationGroup(*become_knight, lag_ratio=0.2),run_time=1.5)
+        self.wait()
+
+        become_knight = []
+        for guy in people:
+            become_knight.append(guy.animate.set_fill(red))
+
+        self.play(AnimationGroup(*become_knight, lag_ratio=0.2),run_time=1.5)
+        self.wait()
+
+        self.play(guy.animate.set_fill(WHITE) for guy in people)
+        self.wait()
+
+        self.play(guy.animate.set_fill(blue) for guy in people)
+        self.play(guy.animate.set_fill(red) for guy in people)
+        self.play(guy.animate.set_fill(WHITE) for guy in people)
+        self.wait()
+
+        become_knight = []
+        knave = people[0]
+        for guy in (people.remove(people[0])):
+            become_knight.append(guy.animate.set_fill(blue))
+        
+        become_knight.append(knave.animate.set_fill(red))
+
+        self.play(AnimationGroup(*become_knight),run_time=1.5)
+        self.wait()
+
+        become_knight = []
+  
+        for guy in (people):
+            become_knight.append(guy.animate.set_fill(red))
+        
+        become_knight.append(knave.animate.set_fill(blue))
+
+        self.play(AnimationGroup(*become_knight),run_time=1.5)
+        self.wait()
+
+        people.add(knave)
+
+        self.play(AnimationGroup(*[guy.animate.set_fill(WHITE) for guy in people]))
+
+        become_knight = []
+        for guy in people:
+            color = random.choice([red, blue])
+            become_knight.append(guy.animate.set_fill(color))
+
+        self.play(AnimationGroup(*become_knight, lag_ratio=0.2),run_time=1.5)
+
+        self.wait()
+
+        become_knight = []
+
+        for guy in people:
+            if guy.get_fill_color().to_hex().lower() == red.lower():
+                become_knight.append(guy.animate.set_fill(blue))
+            else:
+                become_knight.append(guy.animate.set_fill(red))
+        
+        self.play(AnimationGroup(*become_knight),run_time=1.5)
+        self.wait()
+
+        become_knight = []
+        self.play(AnimationGroup(*[guy.animate.set_fill(WHITE) for guy in people]))
+
+        for i in range(20):
+            if i%2==0:
+                become_knight.append(people[i].animate.set_fill(red))
+            else:
+                become_knight.append(people[i].animate.set_fill(blue))
+
+        
+        self.play(AnimationGroup(*become_knight, lag_ratio=0.2),run_time=1.5)
+
+        self.wait()
+        positions  = []
+        for p in people:
+            positions.append(p.get_center())
+
+        original_indices = list(range(20))
+        while True:
+            new_indices = original_indices[:]
+            random.shuffle(new_indices)
+            
+            # If every single person has a new index, break the loop
+            if all(new_indices[i] != original_indices[i] for i in range(20)):
+                break
+
+        # 3. Animate the shuffle
+        animations = []
+        for i in range(20):
+            target_pos = positions[new_indices[i]]
+            # path_arc=PI/1.5 makes them swoop in a nice curved motion
+            animations.append(
+                people[i].animate(path_arc=PI/1.5).move_to(target_pos)
+            )
+
+        # Play all the curved movements simultaneously
+        self.play(*animations, run_time=2.5, rate_func=smooth)
+
+
+
+
+
+        self.wait()
+ 
+        
