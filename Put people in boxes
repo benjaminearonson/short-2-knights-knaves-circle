@@ -1,0 +1,79 @@
+import numpy as np
+from manim import *
+import itertools
+import random
+import math
+
+config.pixel_height = 1920
+config.pixel_width = 1080
+config.frame_height = 16.0
+config.frame_width = 9.0
+
+class PigeonHole(MovingCameraScene):
+    def construct(self):
+        self.camera.background_color = "#121414"
+        people = VGroup(*[SVGMobject("man svg.svg").scale(0.25).set_color("#de1600") for _ in range(20)])
+        box_1 = Rectangle(stroke_color=WHITE, stroke_width=2, fill_color="#ffffff00",height=3,width=3)
+        box_2 = box_1.copy()
+        boxes = VGroup(box_1, box_2)
+        boxes.arrange(buff=1)
+
+        knights = VGroup()
+        knaves = VGroup()
+
+        for i in range(0, 9):
+            knights.add(people[i])
+        for i in range(9,20):
+            knaves.add(people[i])
+        
+        knights.arrange_in_grid(buff=0.4)
+        knights.move_to(box_1.get_center())
+        self.add(knights)
+
+        knaves.arrange_in_grid(buff=0.4)
+        knaves.move_to(box_2.get_center())
+        self.add(knaves)
+        
+        self.add(boxes)
+
+        shift_vector = box_2.get_center() - box_1.get_center()
+
+        anims = []
+        
+        
+        max_people = max(len(knights), len(knaves))
+        for i in range(max_people):
+            if i < len(knights):
+                
+                anims.append(
+                    knights[i].animate(path_arc=PI/1.5).shift(shift_vector)
+                )
+            if i < len(knaves):
+                
+                anims.append(
+                    knaves[i].animate(path_arc=-PI/1.5).shift(-shift_vector)
+                )
+
+        
+        self.play(
+            AnimationGroup(*anims, lag_ratio=0.05), 
+            run_time=6, 
+            rate_func=smooth
+        )
+        self.wait(3)
+
+        moving_person = knaves[7]
+
+        
+        grid_spacing = knights[2].get_center() - knights[1].get_center()
+        target_pos = knights[2].get_center() + grid_spacing
+
+        
+        self.play(
+            moving_person.animate(path_arc=PI/1.5).move_to(target_pos),
+            run_time=2,
+            rate_func=smooth
+        )
+        
+        self.wait(2)
+
