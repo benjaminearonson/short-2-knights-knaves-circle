@@ -1,0 +1,109 @@
+import numpy as np
+from manim import *
+import itertools
+import random
+import math
+
+config.pixel_height = 1920
+config.pixel_width = 1080
+config.frame_height = 16.0
+config.frame_width = 9.0
+
+class PigeonHole(MovingCameraScene):
+    def construct(self):
+        self.camera.background_color = "#121414"
+        people = VGroup(*[SVGMobject("man svg.svg").scale(0.25).set_color(WHITE) for _ in range(20)])
+        radius = 2.5
+        for i, person in enumerate(people):
+            angle = i * TAU / 20
+            person.move_to(RIGHT * radius * np.cos(angle) + UP * radius * np.sin(angle))
+        
+        self.add(people)
+        
+        knight_label = Text("Knights: ", font_size=36,)
+        knight_num = Integer(20).next_to(knight_label, RIGHT)
+        knight_tracker = VGroup(knight_label, knight_num)
+
+        knave_label = Text("Knaves: ", font_size=36,)
+        knave_num = Integer(0).next_to(knave_label, RIGHT)
+        knave_tracker = VGroup(knave_label, knave_num)
+
+    
+        score_board = VGroup(knight_tracker, knave_tracker).arrange(DOWN, aligned_edge=LEFT).to_edge(UP, buff=2)
+        self.add(score_board)
+
+        blue_rgb = np.array(color_to_rgb("#0011ff"))
+        red_rgb = np.array(color_to_rgb("#de1600"))
+
+        def update_knight_count(mob):
+            count = 0
+            for p in people:
+                
+                current_rgb = np.array(color_to_rgb(p[0].get_fill_color()))
+                
+            
+                dist_blue = np.sum((current_rgb - blue_rgb)**2)
+                dist_red = np.sum((current_rgb - red_rgb)**2)
+                
+               
+                if dist_blue <= dist_red:
+                    count += 1
+            mob.set_value(count)
+
+        def update_knave_count(mob):
+            count = 0
+            for p in people:
+   
+                current_rgb = np.array(color_to_rgb(p[0].get_fill_color()))
+                
+                dist_blue = np.sum((current_rgb - blue_rgb)**2)
+                dist_red = np.sum((current_rgb - red_rgb)**2)
+                
+                
+                if dist_red < dist_blue:
+                    count += 1
+            mob.set_value(count)
+
+        
+        knight_num.add_updater(update_knight_count)
+        knave_num.add_updater(update_knave_count)
+        self.wait()
+        self.play(people[0].animate.set_fill("#0011ff"))
+
+        self.wait(2)
+
+        anims = []
+
+        for p in people:
+            if p.get_fill_color().to_hex().lower() == "#0011ff":
+                continue
+            anims.append(p.animate.set_fill(random.choice(["#0011ff","#de1600"])))
+
+        self.play(AnimationGroup(*anims, lag_ratio=0.1))
+
+        self.wait(3)
+        anims = []
+
+        for p in people:
+            if p.get_fill_color().to_hex().lower() == "#0011ff":
+                anims.append(p.animate.set_fill("#de1600"))
+            else:
+                anims.append(p.animate.set_fill("#0011ff"))
+
+        self.play(AnimationGroup(*anims, lag_ratio=0.01))
+
+        self.wait(3)
+
+        red_people = random.sample(list(people), k=10)
+        anims = []
+
+        for p in people:
+            if p in red_people:
+                anims.append(p.animate.set_fill("#de1600"))
+            else:
+                anims.append(p.animate.set_fill("#0011ff"))
+
+
+        self.play(AnimationGroup(*anims, lag_ratio=0.05))
+        
+        self.wait()
