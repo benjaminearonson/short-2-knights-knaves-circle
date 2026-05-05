@@ -9,7 +9,7 @@ config.pixel_width = 1080
 config.frame_height = 16.0
 config.frame_width = 9.0
 
-class PigeonHole(MovingCameraScene):
+class KnightKnaveCircle(MovingCameraScene):
     def construct(self):
         self.camera.background_color = "#121414"
         people = VGroup(*[SVGMobject("man svg.svg").scale(0.25).set_color(WHITE) for _ in range(20)])
